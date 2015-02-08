@@ -2,6 +2,28 @@
 
 .. contents:: Contents of this Document
 
+Scala-JS Launch
+===============
+
+1. Properly pack everything with `sbt fastOptJS`.
+2. Launch simple web-server (e. g. `python -m SimpleHTTPServer`)
+3. Open one of examples in a browser:
+
+* http://localhost:8000/examples/src/main/resources/index-abcparser-opt.html
+* http://localhost:8000/examples/src/main/resources/index-calculator1-opt.html
+* http://localhost:8000/examples/src/main/resources/index-calculator2-opt.html
+* http://localhost:8000/examples/src/main/resources/index-jsonparser-opt.html
+
+Installation
+------------
+
+The artifacts for parboiled2-sjs0.6 live on Maven Central and can be tied into your SBT-based Scala project like this:
+
+.. code:: Scala
+
+    libraryDependencies += "org.parboiled" %%% "parboiled" % "2.0.1"
+
+parboiled2 has only one single dependency that it will transitively pull into your classpath: shapeless (currently version 2.0.0_sjs0.6).
 
 Introduction
 ============

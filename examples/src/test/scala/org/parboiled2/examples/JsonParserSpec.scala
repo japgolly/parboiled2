@@ -18,7 +18,7 @@ package org.parboiled2.examples
 
 import scala.util.{Failure, Success}
 import org.specs2.mutable.Specification
-import spray.json.{JsonParser => _, _}
+import JsonNodes._
 import org.parboiled2._
 
 class JsonParserSpec extends Specification {

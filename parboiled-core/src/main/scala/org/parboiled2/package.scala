@@ -29,6 +29,7 @@ package object parboiled2 {
 
   val EOI = '\uFFFF'
 
+  // TODO: uncomment it when scala-js supports Charsets
   val UTF8 = Charset.forName("UTF-8")
   val `ISO-8859-1` = Charset.forName("ISO-8859-1")
 

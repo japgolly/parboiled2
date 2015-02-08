@@ -10,7 +10,7 @@ val commonSettings = Seq(
   homepage := Some(new URL("http://parboiled.org")),
   description := "Fast and elegant PEG parsing in Scala - lightweight, easy-to-use, powerful",
   startYear := Some(2009),
-  licenses := Seq("Apache 2" -> new URL("http://www.apache.org/licenses/LICENSE-2.0.txt")),
+  licenses := Seq("Apache-2.0" -> new URL("http://www.apache.org/licenses/LICENSE-2.0.txt")),
   javacOptions ++= Seq(
     "-encoding", "UTF-8",
     "-source", "1.6",
@@ -25,7 +25,12 @@ val commonSettings = Seq(
     "-Xlint",
     "-language:_",
     "-target:jvm-1.6",
-    "-Xlog-reflective-calls"))
+    "-Xlog-reflective-calls"),
+  resolvers ++= Seq(
+    Resolver.sonatypeRepo("snapshots"),
+    Resolver.sonatypeRepo("releases"),
+    "spray repo" at "http://repo.spray.io",
+    "bintray-alexander_myltsev" at "http://dl.bintray.com/content/alexander-myltsev/maven"))
 
 val formattingSettings = scalariformSettings ++ Seq(
   ScalariformKeys.preferences := ScalariformKeys.preferences.value
@@ -35,14 +40,9 @@ val formattingSettings = scalariformSettings ++ Seq(
     .setPreference(DoubleIndentClassDeclaration, true)
     .setPreference(PreserveDanglingCloseParenthesis, true))
 
-val publishingSettings = Seq(
+val publishingSettings = bintray.Plugin.bintrayPublishSettings ++ Seq(
   publishMavenStyle := true,
   useGpg := true,
-  publishTo <<= version { v: String =>
-    val nexus = "https://oss.sonatype.org/"
-    if (v.trim.endsWith("SNAPSHOT")) Some("snapshots" at nexus + "content/repositories/snapshots")
-    else                             Some("releases" at nexus + "service/local/staging/deploy/maven2")
-  },
   pomIncludeRepository := { _ => false },
   pomExtra :=
     <scm>
@@ -67,10 +67,10 @@ val noPublishingSettings = Seq(
 
 /////////////////////// DEPENDENCIES /////////////////////////
 
-val scalaReflect     = "org.scala-lang"  %  "scala-reflect"     % "2.11.2"   % "provided"
-val shapeless        = "com.chuusai"     %% "shapeless"         % "2.0.0"    % "compile"
-val specs2Core       = "org.specs2"      %% "specs2-core"       % "2.4.2"   % "test"
-val specs2ScalaCheck = "org.specs2"      %% "specs2-scalacheck" % "2.4.2"   % "test"
+val scalaReflect     = "org.scala-lang"  %   "scala-reflect"      % "2.11.2"  % "provided"
+val specs2Core       = "org.specs2"      %%  "specs2-core"        % "2.4.2"   % "test"
+val specs2ScalaCheck = "org.specs2"      %%  "specs2-scalacheck"  % "2.4.2"   % "test"
+val shapeless        = Def.setting("name.myltsev" %%% "shapeless" % "2.0.0" % "compile")
 
 /////////////////////// PROJECTS /////////////////////////
 
@@ -83,6 +83,7 @@ lazy val examples = project
   .settings(commonSettings: _*)
   .settings(noPublishingSettings: _*)
   .settings(libraryDependencies ++= Seq(specs2Core, "io.spray" %%  "spray-json" % "1.2.6"))
+  .enablePlugins(org.scalajs.sbtplugin.ScalaJSPlugin)
 
 lazy val bench = inputKey[Unit]("Runs the JSON parser benchmark with a simple standard config")
 
@@ -104,7 +105,7 @@ lazy val parboiled = project
   .settings(formattingSettings: _*)
   .settings(publishingSettings: _*)
   .settings(
-    libraryDependencies ++= Seq(scalaReflect, shapeless, specs2Core),
+    libraryDependencies ++= Seq(scalaReflect, shapeless.value, specs2Core),
     mappings in (Compile, packageBin) ++= (mappings in (parboiledCore.project, Compile, packageBin)).value,
     mappings in (Compile, packageSrc) ++= (mappings in (parboiledCore.project, Compile, packageSrc)).value,
     mappings in (Compile, packageDoc) ++= (mappings in (parboiledCore.project, Compile, packageDoc)).value,
@@ -116,7 +117,7 @@ lazy val parboiled = project
       }
       new RuleTransformer(filter).transform(_).head
     }
-  )
+  ).enablePlugins(org.scalajs.sbtplugin.ScalaJSPlugin)
 
 lazy val generateActionOps = taskKey[Seq[File]]("Generates the ActionOps boilerplate source file")
 
@@ -125,7 +126,7 @@ lazy val parboiledCore = project.in(file("parboiled-core"))
   .settings(formattingSettings: _*)
   .settings(noPublishingSettings: _*)
   .settings(
-    libraryDependencies ++= Seq(scalaReflect, shapeless, specs2Core, specs2ScalaCheck),
+    libraryDependencies ++= Seq(scalaReflect, shapeless.value, specs2Core, specs2ScalaCheck),
     generateActionOps := ActionOpsBoilerplate((sourceManaged in Compile).value, streams.value),
     (sourceGenerators in Compile) += generateActionOps.taskValue
-  )
+  ).enablePlugins(org.scalajs.sbtplugin.ScalaJSPlugin)

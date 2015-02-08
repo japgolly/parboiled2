@@ -53,6 +53,7 @@ trait ParserInput {
 object ParserInput {
   val Empty = apply(Array.empty[Byte])
 
+  // TODO: `ISO-8859-1` and `nio.ByteBuffer` is not supported by scala-js (yet)
   implicit def apply(bytes: Array[Byte]): ByteArrayBasedParserInput = new ByteArrayBasedParserInput(bytes)
   implicit def apply(string: String): StringBasedParserInput = new StringBasedParserInput(string)
   implicit def apply(chars: Array[Char]): CharArrayBasedParserInput = new CharArrayBasedParserInput(chars)
@@ -82,6 +83,7 @@ object ParserInput {
    * 7-bit ASCII characters (0x00-0x7F) then UTF-8 is fine, since the first 127 UTF-8 characters are
    * encoded with only one byte that is identical to 7-bit ASCII and ISO-8859-1.
    */
+  // TODO: `ISO-8859-1` and `nio.ByteBuffer` is not supported by scala-js (yet)
   class ByteArrayBasedParserInput(bytes: Array[Byte]) extends DefaultParserInput {
     def charAt(ix: Int) = (bytes(ix) & 0xFF).toChar
     def length = bytes.length
