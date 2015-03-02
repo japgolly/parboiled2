@@ -25,6 +25,7 @@ import org.parboiled2._
  */
 class JsonParser(val input: ParserInput) extends Parser with StringBuilding {
   import CharPredicate.{Digit, Digit19, HexDigit}
+  import JsonParser._
   import JsonNodes._
 
   // the root rule
@@ -95,7 +96,9 @@ class JsonParser(val input: ParserInput) extends Parser with StringBuilding {
   def WhiteSpace = rule { zeroOrMore(WhiteSpaceChar) }
 
   def ws(c: Char) = rule { c ~ WhiteSpace }
+}
 
+object JsonParser {
   val WhiteSpaceChar = CharPredicate(" \n\r\t\f")
   val QuoteBackslash = CharPredicate("\"\\")
   val QuoteSlashBackSlash = QuoteBackslash ++ "/"
@@ -104,11 +107,6 @@ class JsonParser(val input: ParserInput) extends Parser with StringBuilding {
 object Test {
   // 744kb test JSON produced with http://www.json-generator.com/
   val json = io.Source.fromInputStream(getClass.getResourceAsStream("/test.json")).mkString
-}
-
-object JsonParser extends App {
-  for (i <- 0 to 100)
-    new JsonParser(Test.json).Json.run().get
 }
 
 object JsonNodes {

@@ -2,10 +2,11 @@ import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import scalariform.formatter.preferences._
 import scala.xml.transform._
 import scala.xml.{Node => XNode, NodeSeq}
+import org.scalajs.sbtplugin.ScalaJSPlugin
 
 val commonSettings = Seq(
-  version := "2.0.1",
-  scalaVersion := "2.11.2",
+  version := "2.1.0",
+  scalaVersion := "2.11.5",
   organization := "org.parboiled",
   homepage := Some(new URL("http://parboiled.org")),
   description := "Fast and elegant PEG parsing in Scala - lightweight, easy-to-use, powerful",
@@ -49,17 +50,17 @@ val publishingSettings = bintray.Plugin.bintrayPublishSettings ++ Seq(
       <url>git@github.com:sirthias/parboiled2.git</url>
       <connection>scm:git:git@github.com:sirthias/parboiled2.git</connection>
     </scm>
-    <developers>
-      <developer>
-        <id>sirthias</id>
-        <name>Mathias Doenitz</name>
-      </developer>
-      <developer>
-        <id>alexander-myltsev</id>
-        <name>Alexander Myltsev</name>
-        <url>http://www.linkedin.com/in/alexandermyltsev</url>
-      </developer>
-    </developers>)
+      <developers>
+        <developer>
+          <id>sirthias</id>
+          <name>Mathias Doenitz</name>
+        </developer>
+        <developer>
+          <id>alexander-myltsev</id>
+          <name>Alexander Myltsev</name>
+          <url>http://www.linkedin.com/in/alexandermyltsev</url>
+        </developer>
+      </developers>)
 
 val noPublishingSettings = Seq(
   publishArtifact := false,
@@ -67,23 +68,23 @@ val noPublishingSettings = Seq(
 
 /////////////////////// DEPENDENCIES /////////////////////////
 
-val scalaReflect     = "org.scala-lang"  %   "scala-reflect"      % "2.11.2"  % "provided"
-val specs2Core       = "org.specs2"      %%  "specs2-core"        % "2.4.2"   % "test"
-val specs2ScalaCheck = "org.specs2"      %%  "specs2-scalacheck"  % "2.4.2"   % "test"
-val shapeless        = Def.setting("name.myltsev" %%% "shapeless" % "2.0.0" % "compile")
+val scalaReflect     = "org.scala-lang"  %  "scala-reflect"     % "2.11.5"   % "provided"
+val specs2Core       = "org.specs2"      %% "specs2-core"       % "2.4.16"   % "test"
+val specs2ScalaCheck = "org.specs2"      %% "specs2-scalacheck" % "2.4.16"   % "test"
+val shapeless        = Def.setting("name.myltsev" %%% "shapeless" % "2.1.0" % "compile")
 
 /////////////////////// PROJECTS /////////////////////////
 
 lazy val root = project.in(file("."))
-  .aggregate(examples, parboiled, parboiledCore)
+  .aggregate(examples, jsonBenchmark, scalaParser, parboiled, parboiledCore)
   .settings(noPublishingSettings: _*)
 
 lazy val examples = project
   .dependsOn(parboiled)
   .settings(commonSettings: _*)
   .settings(noPublishingSettings: _*)
-  .settings(libraryDependencies ++= Seq(specs2Core, "io.spray" %%  "spray-json" % "1.2.6"))
-  .enablePlugins(org.scalajs.sbtplugin.ScalaJSPlugin)
+  .settings(libraryDependencies ++= Seq(specs2Core, "io.spray" %%  "spray-json" % "1.3.1"))
+  .enablePlugins(ScalaJSPlugin)
 
 lazy val bench = inputKey[Unit]("Runs the JSON parser benchmark with a simple standard config")
 
@@ -94,10 +95,17 @@ lazy val jsonBenchmark = project
   .settings(noPublishingSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
-      "org.json4s" %% "json4s-native" % "3.2.10",
-      "org.json4s" %% "json4s-jackson" % "3.2.10",
+      "org.json4s" %% "json4s-native" % "3.2.11",
+      "org.json4s" %% "json4s-jackson" % "3.2.11",
       "io.argonaut" %% "argonaut" % "6.0.4"),
-    bench := (run in Compile).partialInput(" -i 5 -wi 5 -f1 -t1").evaluated)
+    bench := (run in Compile).partialInput(" -i 10 -wi 10 -f1 -t1").evaluated)
+
+lazy val scalaParser = project
+  .dependsOn(parboiled)
+  .settings(commonSettings: _*)
+  .settings(noPublishingSettings: _*)
+  .settings(libraryDependencies ++= Seq(shapeless.value, specs2Core))
+  .enablePlugins(ScalaJSPlugin)
 
 lazy val parboiled = project
   .dependsOn(parboiledCore)
@@ -112,12 +120,12 @@ lazy val parboiled = project
     mappings in (Compile, packageBin) ~= (_.groupBy(_._2).toSeq.map(_._2.head)), // filter duplicate outputs
     mappings in (Compile, packageDoc) ~= (_.groupBy(_._2).toSeq.map(_._2.head)), // filter duplicate outputs
     pomPostProcess := { // we need to remove the dependency onto the parboiledCore module from the POM
-      val filter = new RewriteRule {
+    val filter = new RewriteRule {
         override def transform(n: XNode) = if ((n \ "artifactId").text.startsWith("parboiledcore")) NodeSeq.Empty else n
       }
       new RuleTransformer(filter).transform(_).head
     }
-  ).enablePlugins(org.scalajs.sbtplugin.ScalaJSPlugin)
+  ).enablePlugins(ScalaJSPlugin)
 
 lazy val generateActionOps = taskKey[Seq[File]]("Generates the ActionOps boilerplate source file")
 
@@ -129,4 +137,4 @@ lazy val parboiledCore = project.in(file("parboiled-core"))
     libraryDependencies ++= Seq(scalaReflect, shapeless.value, specs2Core, specs2ScalaCheck),
     generateActionOps := ActionOpsBoilerplate((sourceManaged in Compile).value, streams.value),
     (sourceGenerators in Compile) += generateActionOps.taskValue
-  ).enablePlugins(org.scalajs.sbtplugin.ScalaJSPlugin)
+  ).enablePlugins(ScalaJSPlugin)

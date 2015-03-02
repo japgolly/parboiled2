@@ -16,22 +16,26 @@
 
 package org.parboiled2
 
-import org.specs2.mutable._
-import scala.util.Success
+class CutSpec extends TestParserSpec {
 
-class PushResetSpec extends Specification {
+  "The `~!~` (cut) operator" should {
+    "work as expected" in new TestParser0 {
+      def targetRule = rule { foo ~ EOI }
+      def foo = rule { "abc" | "a" ~!~ "de" | "axy" }
 
-  case class A(a: Int = 0, b: Int = 1)
+      "abc" must beMatched
+      "ade" must beMatched
+      "axy" must beMismatched
 
-  class Foo(val input: ParserInput) extends Parser {
-    def Foo: Rule1[A] = rule {
-      "foo" ~ push(A(b = 2))
-    }
-  }
-
-  "push action" should {
-    "handle default arguments" in {
-      new Foo("foo").Foo.run() should_== Success(A(0, 2))
+      "axy" must beMismatchedWithErrorMsg(
+        """Invalid input 'x', expected 'b' or 'd' (line 1, column 2):
+          |axy
+          | ^
+          |
+          |2 rules mismatched at error location:
+          |  /targetRule/ /foo/ |:-1 / "abc":-1 / 'b'
+          |  /targetRule/ /foo/ |:-1 / cut:-1 / "de" / 'd'
+          |""")
     }
   }
 }

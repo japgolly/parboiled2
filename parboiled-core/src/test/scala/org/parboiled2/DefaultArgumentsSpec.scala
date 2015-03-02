@@ -14,32 +14,22 @@
  * limitations under the License.
  */
 
-package org.parboiled2.nested
+package org.parboiled2
 
+import org.specs2.mutable._
 import scala.util.Success
-import org.specs2.mutable.Specification
 
-class ExtendedParserSpec extends Specification {
+class DefaultArgumentsSpec extends Specification {
 
-  abstract class AbstractParser(val input: org.parboiled2.ParserInput) extends org.parboiled2.Parser {
-    import org.parboiled2.{ Rule1, CharPredicate }
+  case class A(a: Int = 0, b: Int = 1)
 
-    def foo: Rule1[String] = rule {
-      capture("foo" ~ zeroOrMore(CharPredicate.Digit))
-    }
-
+  class Foo(val input: ParserInput) extends Parser {
+    def Foo: Rule1[A] = rule { "foo" ~ push(A(b = 2)) }
   }
 
-  class FooParser(input: String) extends AbstractParser(input) {
-    def Go = rule {
-      foo ~ EOI
+  "The `push` action" should {
+    "properly handle default arguments" in {
+      new Foo("foo").Foo.run() === Success(A(0, 2))
     }
   }
-
-  "Parsers in files that dont explicitly import org.parboiled2._" should {
-    "compile" in {
-      new FooParser("foo123").Go.run() should_== Success("foo123")
-    }
-  }
-
 }
