@@ -237,7 +237,14 @@ object CharPredicate {
 
   class ArrayBased private[CharPredicate] (private val chars: Array[Char]) extends CharPredicate {
     import java.util.Arrays._
-    sort(chars)
+    ///////////////////////////////////////
+    // TODO: https://github.com/alexander-myltsev/parboiled2/issues/9
+    // original code:
+    // sort(chars)
+    sort(chars.map(c ⇒ c.asInstanceOf[Object]), (new java.util.Comparator[Char]() {
+      def compare(c1: Char, c2: Char): Int = c2 - c1
+    }).asInstanceOf[java.util.Comparator[Object]])
+    ///////////////// END /////////////////
 
     // TODO: switch to faster binary search algorithm with an adaptive pivot, e.g. http://ochafik.com/blog/?p=106
     def apply(c: Char): Boolean = binarySearch(chars, c) >= 0
